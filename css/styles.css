@@ -1,0 +1,110 @@
+/* ============================================================================
+ * KJ Live Javascript — styles
+ * ---------------------------------------------------------------------------
+ * Tailwind (CDN) handles the layout and utilities; this file covers the custom
+ * bits: dark scrollbars, the CodeMirror skin, console rows and the divider.
+ *
+ * Loaded after the CodeMirror theme stylesheet so these rules win the cascade.
+ * ========================================================================== */
+
+/* ---------- Base ---------- */
+html, body { height: 100%; }
+
+body {
+  -webkit-font-smoothing: antialiased;
+  background:
+    radial-gradient(1100px 520px at 82% -12%, rgba(14, 165, 233, .12), transparent 62%),
+    radial-gradient(900px 480px at 6% 108%, rgba(168, 85, 247, .10), transparent 60%),
+    #0b0f17;
+}
+
+/* ---------- Custom dark scrollbars ---------- */
+.kj-scroll { scrollbar-width: thin; scrollbar-color: #33415580 transparent; }
+.kj-scroll::-webkit-scrollbar { width: 10px; height: 10px; }
+.kj-scroll::-webkit-scrollbar-track { background: transparent; }
+.kj-scroll::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+.kj-scroll::-webkit-scrollbar-thumb:hover { background: #334155; background-clip: content-box; }
+
+/* ---------- CodeMirror skin (aligned with the app palette) ----------
+   Selectors deliberately include the `.cm-s-material-darker` class: the theme
+   ships `.cm-s-material-darker.CodeMirror{background:#212121}`, which would
+   otherwise outrank a plain `.CodeMirror` rule and leave a grey editor. */
+.CodeMirror {
+  height: 100%;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: 13.5px;
+  line-height: 1.6;
+}
+.cm-s-material-darker.CodeMirror { background-color: #0d1420; color: #e2e8f0; }
+.cm-s-material-darker .CodeMirror-gutters { background: #0a101a; color: #475569; border-right: 1px solid #1e293b; }
+.cm-s-material-darker .CodeMirror-linenumber { color: #475569; }
+.cm-s-material-darker .CodeMirror-cursor { border-left: 2px solid #38bdf8; }
+.cm-s-material-darker div.CodeMirror-selected,
+.cm-s-material-darker.CodeMirror-focused div.CodeMirror-selected { background: #1d4ed833; }
+.cm-s-material-darker .CodeMirror-activeline-background { background: #ffffff08; }
+.cm-s-material-darker .CodeMirror-matchingbracket { color: #38bdf8 !important; border-bottom: 1px solid #38bdf8; }
+/* Lift the theme's very dim comment colour for readability. */
+.cm-s-material-darker .cm-comment { color: #64748b; }
+
+/* ---------- CodeMirror autocomplete dropdown ---------- */
+.CodeMirror-hints { z-index: 40; border: 1px solid #1e293b; background: #0f172a; padding: 4px; }
+.CodeMirror-hint { color: #cbd5e1; font-family: inherit; }
+li.CodeMirror-hint-active { background: #0ea5e9; color: #04121f; }
+
+/* ---------- Console rows ---------- */
+@keyframes kj-fade-in {
+  from { opacity: 0; transform: translateY(3px); }
+  to   { opacity: 1; transform: none; }
+}
+.kj-row { animation: kj-fade-in .13s ease-out; }
+
+@keyframes kj-pulse-dot {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: .35; }
+}
+.kj-pulse { animation: kj-pulse-dot 1s ease-in-out infinite; }
+
+/* ---------- Pane divider ---------- */
+.kj-divider { transition: background-color .15s ease; }
+.kj-divider:hover { background-color: #0ea5e999; }
+.kj-divider::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 2px;
+  height: 26px;
+  margin: -13px 0 0 -1px;
+  border-radius: 2px;
+  background: #475569;
+  transition: background-color .15s ease, height .15s ease;
+}
+.kj-divider:hover::after { background: #38bdf8; height: 40px; margin-top: -20px; }
+.kj-divider:focus-visible::after { background: #38bdf8; height: 40px; margin-top: -20px; }
+
+/* ---------- Language switch (EN | ID) ---------- */
+.kj-lang button { color: #64748b; }
+.kj-lang button:hover { color: #cbd5e1; }
+.kj-lang button[aria-pressed="true"] {
+  color: #04121f;
+  background: linear-gradient(180deg, #38bdf8, #0284c7);
+  box-shadow: 0 1px 6px rgba(14, 165, 233, .35);
+}
+
+/* ---------- Screen-reader only ---------- */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

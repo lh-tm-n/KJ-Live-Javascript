@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live JS Editor</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- CodeMirror CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
+    <!-- CodeMirror Dracula Theme -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/dracula.min.css">
+    
+    <style>
+        /* Base overrides to prevent scrolling on the body */
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #282a36; /* Match Dracula theme */
+        }
+        
+        /* Ensure CodeMirror takes full height of its container */
+        .CodeMirror {
+            height: 100%;
+            font-family: 'Fira Code', 'Consolas', monospace;
+            font-size: 15px;
+        }
+
+        /* Terminal styling overrides */
+        #console-output {
+            font-family: 'Fira Code', 'Consolas', monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .log-entry {
+            padding: 4px 8px;
+            margin-bottom: 2px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* Custom Scrollbar for Terminal */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e1f29;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #44475a;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #6272a4;
+        }
+    </style>
+</head>
+<body class="h-screen w-screen flex flex-col text-gray-200">
+
+    <!-- Header -->
+    <header class="bg-gray-900 border-b border-gray-700 flex justify-between items-center px-6 py-3 shadow-lg z-10 shrink-0">
+        <div class="flex items-center gap-3">
+            <svg class="w-7 h-7 text-yellow-400" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5v-4H8.5v-1H11v5h-2zm3 0v-1h2v-4h-2v-1h3v6h-3z"></path>
+            </svg>
+            <h1 class="text-xl font-bold tracking-wide text-white">Live JS Playground</h1>
+        </div>
+        <button id="run-btn" class="bg-green-500 hover:bg-green-400 text-gray-900 px-5 py-2 rounded font-bold transition-all shadow-md active:scale-95 flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            Run Code
+        </button>
+    </header>
+
+    <!-- Main Workspace -->
+    <main class="flex-1 flex flex-col md:flex-row overflow-hidden bg-[#282a36]">
+        
+        <!-- Left Pane: CodeMirror Editor -->
+        <section class="flex-1 flex flex-col w-full md:w-1/2 border-r border-gray-700 relative h-1/2 md:h-full">
+            <div class="bg-[#1e1f29] text-gray-400 px-4 py-1.5 text-xs uppercase tracking-wider font-semibold shadow-sm z-10 shrink-0">
+                script.js
+            </div>
+            <div class="flex-1 overflow-hidden relative">
+                <textarea id="code-editor"></textarea>
+            </div>
+        </section>
+
+        <!-- Right Pane: Console Output -->
+        <section class="flex-1 flex flex-col w-full md:w-1/2 h-1/2 md:h-full bg-[#1e1f29]">
+            <div class="bg-[#191a21] text-gray-400 px-4 py-1.5 text-xs uppercase tracking-wider font-semibold border-b border-gray-700 shadow-sm z-10 shrink-0 flex justify-between items-center">
+                <span>Terminal Output</span>
+                <button id="clear-btn" class="hover:text-white transition-colors" title="Clear Console">
+                    Clear
+                </button>
+            </div>
+            <div id="console-output" class="flex-1 overflow-y-auto p-4">
+                <!-- Logs will appear here -->
+                <div class="text-gray-500 italic text-sm">Ready. Output will be displayed here...</div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- CodeMirror JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
+    <!-- CodeMirror JS Syntax Mode -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/javascript/javascript.min.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            // --- 1. Initialize CodeMirror ---
+            const editorElement = document.getElementById('code-editor');
+            
+            const initialCode = `// Welcome to the Live JS Editor!
+// Write some code and click 'Run Code' above.
+
+console.log("Hello, World!");
+
+const fruits = ['Apple', 'Banana', 'Cherry'];
+console.log("Array example:", fruits);
+
+// Warning example
+console.warn("This is a warning message.");
+
+// Let's trigger a deliberate error to see the try...catch in action!
+// Uncomment the line below to test:
+// nonExistentFunction();
+`;
+
+            const editor = CodeMirror.fromTextArea(editorElement, {
+                mode: "javascript",
+                theme: "dracula",
+                lineNumbers: true,
+                autoCloseBrackets: true,
+                matchBrackets: true,
+                indentUnit: 4,
+                tabSize: 4,
+            });
+            
+            editor.setValue(initialCode);
+
+            // --- 2. Setup Console Interception ---
+            const outputContainer = document.getElementById('console-output');
+            const runBtn = document.getElementById('run-btn');
+            const clearBtn = document.getElementById('clear-btn');
+
+            // Save original console methods
+            const originalConsole = {
+                log: console.log,
+                error: console.error,
+                warn: console.warn
+            };
+
+            // Helper to stringify objects safely
+            function formatArgs(args) {
+                return Array.from(args).map(arg => {
+                    if (arg === undefined) return 'undefined';
+                    if (arg === null) return 'null';
+                    if (typeof arg === 'object') {
+                        try {
+                            if (arg instanceof Error) return arg.stack || arg.message;
+                            return JSON.stringify(arg, null, 2);
+                        } catch (e) {
+                            return String(arg); 
+                        }
+                    }
+                    return String(arg);
+                }).join(' ');
+            }
+
+            // UI Log Appender
+            function appendToTerminal(message, typeClasses) {
+                const logEntry = document.createElement('div');
+                logEntry.className = `log-entry ${typeClasses}`;
+                logEntry.textContent = message;
+                outputContainer.appendChild(logEntry);
+                
+                // Auto-scroll to bottom
+                outputContainer.scrollTop = outputContainer.scrollHeight;
+            }
+
+            // Override global console methods permanently so async logs (like setTimeout) are caught too
+            console.log = function(...args) {
+                originalConsole.log.apply(console, args); // Still log to browser console
+                appendToTerminal(formatArgs(args), 'text-green-400'); // Greenish text for normal logs
+            };
+            
+            console.error = function(...args) {
+                originalConsole.error.apply(console, args);
+                // Red text, slight red background, left border for errors
+                appendToTerminal(formatArgs(args), 'text-red-400 bg-red-900/20 border-l-2 border-red-500 pl-2');
+            };
+            
+            console.warn = function(...args) {
+                originalConsole.warn.apply(console, args);
+                // Yellow text, slight yellow background, left border for warnings
+                appendToTerminal(formatArgs(args), 'text-yellow-300 bg-yellow-900/20 border-l-2 border-yellow-500 pl-2');
+            };
+
+            // --- 3. Code Execution Logic ---
+            function clearConsole() {
+                outputContainer.innerHTML = '';
+            }
+
+            function executeCode() {
+                // Clear terminal before running
+                clearConsole();
+                
+                const code = editor.getValue();
+                
+                try {
+                    // Create an isolated function execution context
+                    // This allows variables to be redeclared on consecutive runs
+                    const execute = new Function(code);
+                    execute();
+                } catch (error) {
+                    // Catch syntax errors or runtime issues thrown by the execution
+                    console.error(error);
+                }
+            }
+
+            // --- 4. Event Listeners ---
+            runBtn.addEventListener('click', executeCode);
+            clearBtn.addEventListener('click', clearConsole);
+
+            // Allow quick execution with Ctrl+Enter or Cmd+Enter
+            document.addEventListener('keydown', (e) => {
+                if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                    e.preventDefault();
+                    executeCode();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

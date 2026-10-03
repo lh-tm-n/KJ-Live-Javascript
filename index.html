@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="description" content="KJ Live Javascript - write and run JavaScript in your browser, with a live console." />
+<meta name="theme-color" content="#0b0f17" />
+<title>KJ Live Javascript</title>
+
+<!-- Inline SVG favicon: a terminal glyph with the KJ monogram -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230d1420'/%3E%3Ctext x='32' y='42' font-family='monospace' font-size='26' font-weight='bold' fill='%2338bdf8' text-anchor='middle'%3EKJ%3C/text%3E%3C/svg%3E" />
+
+<!-- ==========================================================================
+     Tailwind CSS (CDN)
+     ========================================================================== -->
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  // Theme extension — must be set after the CDN script loads.
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          ink:   { 950: '#070b12', 900: '#0b0f17', 850: '#0d1420', 800: '#111a28' },
+          brand: { 400: '#38bdf8', 500: '#0ea5e9', 600: '#0284c7' }
+        },
+        fontFamily: {
+          mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Consolas', '"Liberation Mono"', 'monospace']
+        }
+      }
+    }
+  };
+</script>
+
+<!-- ==========================================================================
+     CodeMirror 5 (CDN): JS mode, dark theme, quality-of-life addons
+     ========================================================================== -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-darker.min.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/show-hint.min.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/dialog/dialog.min.css" />
+
+<!-- Our own styles last, so they win the cascade over the CodeMirror theme -->
+<link rel="stylesheet" href="css/styles.css" />
+
+<!-- ==========================================================================
+     Scripts — classic scripts (not modules) so the page also works when opened
+     straight from disk, where ES modules would be blocked by CORS.
+     `defer` keeps them in order and runs them after the DOM is parsed.
+     ========================================================================== -->
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/selection/active-line.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/comment/comment.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/search/searchcursor.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/search/search.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/dialog/dialog.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/show-hint.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/javascript-hint.min.js"></script>
+
+<script defer src="js/config.js"></script>
+<script defer src="js/i18n.js"></script>
+<script defer src="js/sandbox.js"></script>
+<script defer src="js/editor.js"></script>
+<script defer src="js/app.js"></script>
+</head>
+
+<body class="h-screen overflow-hidden font-sans text-slate-200 antialiased">
+
+<div class="flex h-full flex-col">
+
+  <!-- ==========================================================================
+       HEADER — brand + actions
+       ========================================================================== -->
+  <header class="z-20 flex shrink-0 flex-wrap items-center gap-x-4 gap-y-3 border-b border-white/10 bg-ink-900/80 px-4 py-3 backdrop-blur sm:px-5">
+    <!-- Brand -->
+    <div class="flex min-w-0 items-center gap-3">
+      <div class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-brand-400 to-violet-500 font-mono text-sm font-bold text-ink-950 shadow-lg shadow-brand-500/20">
+        KJ
+      </div>
+      <div class="min-w-0">
+        <h1 class="truncate text-[15px] font-semibold leading-tight tracking-tight text-white sm:text-base">
+          KJ Live Javascript
+        </h1>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="ml-auto flex flex-wrap items-center gap-2">
+
+      <!-- Language: EN | ID -->
+      <div class="kj-lang flex select-none items-center rounded-lg border border-white/10 bg-white/5 p-0.5"
+           role="group" data-i18n-aria-label="lang.switch">
+        <button type="button" data-lang="en" aria-pressed="true"
+                class="rounded-[7px] px-2.5 py-1.5 text-[11px] font-semibold text-slate-400 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400">EN</button>
+        <button type="button" data-lang="id" aria-pressed="false"
+                class="rounded-[7px] px-2.5 py-1.5 text-[11px] font-semibold text-slate-400 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400">ID</button>
+      </div>
+
+      <!-- Status pill -->
+      <span id="status"
+            class="inline-flex select-none items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] font-medium text-slate-300">
+        <span id="statusDot" class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
+        <span id="statusText" data-i18n="status.ready">Ready</span>
+      </span>
+
+      <!-- Clear console -->
+      <button id="clearBtn" type="button" data-i18n-title="action.clear"
+              class="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-medium text-slate-300 transition hover:border-white/20 hover:bg-white/10 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400">
+        <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6" />
+        </svg>
+        <span class="hidden sm:inline" data-i18n="action.clear">Clear</span>
+      </button>
+
+      <!-- Stop (only meaningful while code is running) -->
+      <button id="stopBtn" type="button" disabled data-i18n-title="action.stop"
+              class="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-medium text-slate-400 transition hover:border-rose-400/40 hover:bg-rose-500/10 hover:text-rose-300 disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:border-white/10 disabled:hover:bg-white/5 disabled:hover:text-slate-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-400">
+        <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor">
+          <rect x="6" y="6" width="12" height="12" rx="2" />
+        </svg>
+        <span class="hidden sm:inline" data-i18n="action.stop">Stop</span>
+      </button>
+
+      <!-- Run -->
+      <button id="runBtn" type="button" data-i18n-title="action.run"
+              class="group inline-flex items-center gap-2 rounded-lg bg-gradient-to-b from-brand-400 to-brand-600 px-4 py-2 text-xs font-semibold text-ink-950 shadow-lg shadow-brand-500/25 transition hover:from-sky-300 hover:to-brand-500 active:scale-[.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 focus-visible:ring-offset-2 focus-visible:ring-offset-ink-900">
+        <svg class="h-3.5 w-3.5 transition-transform group-hover:scale-110" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M8 5.14v13.72a1 1 0 0 0 1.53.85l10.28-6.86a1 1 0 0 0 0-1.7L9.53 4.29A1 1 0 0 0 8 5.14Z" />
+        </svg>
+        <span data-i18n="action.run">Run</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ==========================================================================
+       MAIN WORKSPACE — editor pane | divider | console pane
+       Side-by-side on desktop (lg+), stacked on mobile.
+       ========================================================================== -->
+  <main id="workspace" class="flex min-h-0 flex-1 flex-col lg:flex-row">
+
+    <!-- ---------- LEFT: editor ---------- -->
+    <section id="editorPane" data-i18n-aria-label="pane.editor" class="flex min-h-0 min-w-0 flex-1 basis-1/2 flex-col">
+      <!-- pane header -->
+      <div class="flex shrink-0 items-center gap-2 border-b border-white/10 bg-ink-900/50 px-3 py-2">
+        <span class="flex items-center gap-2 rounded-md bg-white/5 px-2 py-1 font-mono text-[11px] text-slate-300">
+          <svg class="h-3 w-3 text-amber-400" viewBox="0 0 24 24" fill="currentColor"><path d="M4 4h16v16H4z" opacity=".25"/><path d="M9 8h6M9 12h6M9 16h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/></svg>
+          <span data-i18n="pane.editor">playground</span>
+        </span>
+        <span id="editorMeta" class="ml-auto font-mono text-[11px] text-slate-500">Line 1, column 1</span>
+      </div>
+
+      <!-- CodeMirror host -->
+      <div class="relative min-h-0 flex-1">
+        <textarea id="editor" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off"
+                  aria-label="JavaScript source code"></textarea>
+      </div>
+
+      <!-- pane footer -->
+      <div class="flex shrink-0 items-center gap-3 border-t border-white/10 bg-ink-900/50 px-3 py-1.5 text-[11px] text-slate-500">
+        <span>JavaScript</span>
+        <span class="text-slate-700">&bull;</span>
+        <span data-i18n="editor.indent">Indent: 2 spaces</span>
+        <span class="ml-auto hidden font-mono sm:inline" id="codeStats">0 lines &middot; 0 characters</span>
+      </div>
+    </section>
+
+    <!-- ---------- Resizable divider (desktop only) ---------- -->
+    <div id="divider" role="separator" aria-orientation="vertical" data-i18n-title="divider.hint"
+         tabindex="0"
+         class="kj-divider relative hidden w-1.5 shrink-0 cursor-col-resize bg-white/5 lg:block"></div>
+
+    <!-- ---------- RIGHT: console ---------- -->
+    <section id="consolePane" data-i18n-aria-label="pane.output" class="flex min-h-0 min-w-0 flex-1 basis-1/2 flex-col bg-ink-850">
+
+      <!-- title bar -->
+      <div class="flex shrink-0 items-center gap-3 border-b border-white/10 bg-ink-900/70 px-3 py-2">
+        <span class="flex items-center gap-1.5" aria-hidden="true">
+          <span class="h-2.5 w-2.5 rounded-full bg-rose-500/80"></span>
+          <span class="h-2.5 w-2.5 rounded-full bg-amber-400/80"></span>
+          <span class="h-2.5 w-2.5 rounded-full bg-emerald-500/80"></span>
+        </span>
+        <span class="font-mono text-[11px] uppercase tracking-wider text-slate-400" data-i18n="pane.output">Output</span>
+        <span id="counter" class="hidden font-mono text-[11px] text-slate-600 sm:inline">0 messages</span>
+        <button id="clearBtnSmall" type="button" data-i18n="action.clear"
+                class="ml-auto rounded px-2 py-1 font-mono text-[11px] capitalize text-slate-500 transition hover:bg-white/10 hover:text-slate-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400">
+          clear
+        </button>
+      </div>
+
+      <!-- output stream (scrollable) -->
+      <div id="output" role="log" aria-live="polite" aria-atomic="false"
+           class="kj-scroll min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-1 py-2 font-mono text-[13px] leading-relaxed">
+
+        <!-- empty state -->
+        <div id="emptyState" class="flex h-full min-h-[180px] flex-col items-center justify-center gap-2 px-6 text-center">
+          <svg class="h-8 w-8 text-slate-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m7 8-4 4 4 4M17 8l4 4-4 4M14 4l-4 16" />
+          </svg>
+          <p class="text-sm text-slate-500" data-i18n="output.empty.title">Nothing here yet</p>
+          <p class="text-xs text-slate-600" data-i18n="output.empty.hint">Write some code on the left, then press Run.</p>
+        </div>
+      </div>
+
+      <!-- console footer -->
+      <div class="flex shrink-0 items-center gap-3 border-t border-white/10 bg-ink-900/50 px-3 py-1.5 text-[11px] text-slate-500">
+        <span class="hidden sm:inline"><span class="text-emerald-400">&#9679;</span> <span data-i18n="output.legend.log">messages</span></span>
+        <span class="hidden sm:inline"><span class="text-amber-400">&#9679;</span> <span data-i18n="output.legend.warn">warnings</span></span>
+        <span class="hidden sm:inline"><span class="text-rose-400">&#9679;</span> <span data-i18n="output.legend.error">errors</span></span>
+        <span id="timing" class="ml-auto font-mono text-slate-600"></span>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- Screen-reader announcements for run results -->
+<p id="liveStatus" class="sr-only" aria-live="polite"></p>
+
+</body>
+</html>
